@@ -1,4 +1,7 @@
-import docx, PyPDF2
+import io
+
+import docx
+import PyPDF2
 
 
 def extract_text(file_path):
@@ -23,7 +26,6 @@ def extract_text(file_path):
     else:
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
-
 
 def chunk_text(text, chunk_size=30000, overlap=5000):
     """
