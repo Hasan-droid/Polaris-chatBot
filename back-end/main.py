@@ -161,9 +161,10 @@ def health_check():
 
 @app.get("/files")
 def list_project_files():
+    files_dir = PROJECT_ROOT / "files"
     files = [
-        str(path.relative_to(PROJECT_ROOT))
-        for path in PROJECT_ROOT.rglob("*")
+        str(path.relative_to(files_dir))
+        for path in files_dir.rglob("*")
         if path.is_file() and path.suffix.lower() in SUPPORTED_EXTENSIONS
     ]
     return {"files": sorted(files)}
