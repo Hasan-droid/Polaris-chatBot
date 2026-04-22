@@ -5,11 +5,16 @@ export const env = {
     process.env.NEXT_PUBLIC_BACKEND_STREAM_PATH ?? "/chat/stream"
 };
 
-export function buildBackendStreamUrl(): string {
+export function buildBackendUrl(path: string): string {
   const base = env.backendBaseUrl.replace(/\/+$/, "");
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${normalizedPath}`;
+}
+
+export function buildBackendStreamUrl(): string {
   const path = env.backendStreamPath.startsWith("/")
     ? env.backendStreamPath
     : `/${env.backendStreamPath}`;
-  return `${base}${path}`;
+  return buildBackendUrl(path);
 }
 
