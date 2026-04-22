@@ -15,16 +15,15 @@ They are combined in:
 
 ### Request shape
 
-Frontend sends:
+Frontend sends **`multipart/form-data`** with one field:
 
-```json
-{
-  "messages": [
-    { "role": "user", "content": "Hello" },
-    { "role": "assistant", "content": "Hi" },
-    { "role": "user", "content": "Explain streaming." }
-  ]
-}
+- `question` (string, required)
+
+Example (curl):
+
+```bash
+curl -N -X POST http://localhost:8000/chat/stream \
+  -F "question=What is this document about?" \
 ```
 
 Implementation: `src/lib/chat/streamChat.ts`
@@ -38,24 +37,41 @@ Backend returns:
 - status 200
 - header `Content-Type: text/event-stream`
 
+This backend uses **named SSE events** with **JSON payloads**.
+
+Possible events:
+
+- `event: start` (metadata; ignored by the UI)
+- `event: chunk_start` (metadata; ignored by the UI)
+- `event: chunk_complete` (metadata; ignored by the UI)
+- `event: token` (streaming answer text; appended to the assistant message)
+- `event: complete` (end of stream)
+- `event: error` (stream fails; surfaced in UI)
+
 Stream body like:
 
 ```
-data: Hello
+event: token
+data: {"content":"Hello"}
 
-data:  there
+event: token
+data: {"content":" there"}
 
-data: !
+event: token
+data: {"content":"!"}
 
-data: [DONE]
+event: complete
+data: {"duration_seconds":1.23,"matches_found":2,"answer":"Hello there!"}
 
 ```
 
 Notes:
 
 - Each blank line ends an SSE event.
-- This frontend reads only `data:` lines.
-- `[DONE]` ends the stream.
+- This frontend uses `event:` to decide what to do:
+  - `token` → append `data.content`
+  - `complete` → finish
+  - `error` → throw `data.message`
 
 #### Option B) Raw chunked text
 
@@ -69,9 +85,9 @@ and just writes bytes progressively; the frontend appends each chunk as it arriv
 ### Where to change streaming implementation
 
 - **Main streaming function**: `src/lib/chat/streamChat.ts`
-  - Change headers, payload shape, parsing rules, `[DONE]` sentinel, etc.
+  - Change payload shape, parsing rules, event names, etc.
 - **UI integration**: `src/hooks/useChat.ts`
-  - Change how messages are converted into the request payload.
+  - Change how the input text is mapped into the `question` field.
 
 ### Common backend gotchas
 

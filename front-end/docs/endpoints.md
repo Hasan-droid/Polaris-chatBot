@@ -69,15 +69,12 @@ Content type:
 Inputs:
 
 - `question` (string, required): question to ask about the file contents
-- `model` (string, optional): OpenAI model name, default is `gpt-4o`
 
 Example request:
 
 ```bash
 curl -N -X POST http://localhost:8000/chat/stream \
-  -F "file_path=sample.pdf" \
   -F "question=What is this document about?" \
-  -F "model=gpt-4o"
 ```
 
 Response type:
@@ -175,8 +172,3 @@ Example payload:
 }
 ```
 
-## Important note about current implementation
-
-The endpoint definition accepts `file_path`, but the current code does not use the submitted `file_path` value when selecting the file to read.
-
-At the moment, the implementation resolves a path named `files` inside the project instead of using the posted `file_path` field. If that path does not exist as a supported file, the request will fail before streaming starts.

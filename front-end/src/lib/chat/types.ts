@@ -8,9 +8,10 @@ export type ChatMessage = {
 };
 
 export type ChatRequest = {
-  messages: Array<{
-    role: ChatRole;
-    content: string;
-  }>;
+  /**
+   * Backend contract (see `docs/endpoints.md`):
+   * `multipart/form-data` field: `question`
+   */
+  question: string;
 };
 

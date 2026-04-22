@@ -10,7 +10,6 @@ export function ChatShell() {
   const { messages, isStreaming, canSend, error, send, stop } = useChat();
   const [text, setText] = useState("");
   const endRef = useRef<HTMLDivElement | null>(null);
-  console.log("BACKEND:", process.env.NEXT_PUBLIC_BACKEND_BASE_URL);
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length, isStreaming]);

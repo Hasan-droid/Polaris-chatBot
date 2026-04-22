@@ -13,14 +13,12 @@ function isSseResponse(res: Response) {
 }
 
 /**
- * Sends the conversation to the backend and streams the assistant response.
+ * Sends a question to the backend and streams the assistant response.
  *
- * Backend contract (recommended):
+ * Backend contract (see `docs/endpoints.md`):
  * - POST {baseUrl}{path}
- * - Accepts JSON body: { messages: [{role, content}, ...] }
- * - Returns streaming:
- *   - `text/event-stream` where each `data:` line is a text chunk, OR
- *   - `text/plain` chunked response
+ * - Accepts `multipart/form-data` with field `question`
+ * - Returns `text/event-stream` (SSE)
  */
 export async function streamChat(
   payload: ChatRequest,
@@ -29,13 +27,15 @@ export async function streamChat(
 ): Promise<void> {
   const url = buildBackendStreamUrl();
 
+  const form = new FormData();
+  form.set("question", payload.question);
+
   const res = await fetch(url, {
     method: "POST",
     headers: {
-      "content-type": "application/json",
       accept: "text/event-stream, text/plain, application/json"
     },
-    body: JSON.stringify(payload),
+    body: form,
     signal
   });
 
@@ -45,14 +45,53 @@ export async function streamChat(
   }
 
   if (isSseResponse(res)) {
+    let eventName: string | null = null;
     let dataParts: string[] = [];
 
     const flush = () => {
       if (dataParts.length === 0) return;
       const data = dataParts.join("\n");
       dataParts = [];
+      const currentEvent = eventName;
+      eventName = null;
+
+      // Compatibility with simpler SSE streams that signal completion via [DONE]
       if (data === "[DONE]") return "DONE" as const;
-      onToken(data);
+
+      // This backend sends JSON payloads for named events.
+      let parsed: unknown = undefined;
+      try {
+        parsed = JSON.parse(data);
+      } catch {
+        parsed = undefined;
+      }
+
+      if (currentEvent === "token") {
+        const content =
+          typeof parsed === "object" &&
+          parsed !== null &&
+          "content" in parsed &&
+          typeof (parsed as any).content === "string"
+            ? (parsed as any).content
+            : data;
+        onToken(content);
+        return;
+      }
+
+      if (currentEvent === "complete") return "DONE" as const;
+
+      if (currentEvent === "error") {
+        const message =
+          typeof parsed === "object" &&
+          parsed !== null &&
+          "message" in parsed &&
+          typeof (parsed as any).message === "string"
+            ? (parsed as any).message
+            : "Streaming failed";
+        throw new Error(message);
+      }
+
+      // Ignore non-token events (start, chunk_start, chunk_complete).
       return;
     };
 
@@ -60,10 +99,12 @@ export async function streamChat(
       const trimmed = line.replace(/\r$/, "");
       if (trimmed === "") {
         const out = flush();
-        if (out === "DONE") {
-          onDone?.();
-          return;
-        }
+        if (out === "DONE") break;
+        continue;
+      }
+
+      if (trimmed.startsWith("event:")) {
+        eventName = trimmed.slice("event:".length).trim();
         continue;
       }
 
@@ -72,7 +113,11 @@ export async function streamChat(
       }
     }
 
-    flush();
+    const out = flush();
+    if (out === "DONE") {
+      onDone?.();
+      return;
+    }
     onDone?.();
     return;
   }

@@ -66,13 +66,7 @@ export function useChat() {
       try {
         await streamChat(
           {
-            messages: [
-              ...messagesRef.current.map((m) => ({
-                role: m.role,
-                content: m.content
-              })),
-              { role: "user", content }
-            ]
+            question: content
           },
           {
             onToken: (token) => {
@@ -83,7 +77,8 @@ export function useChat() {
                     : m
                 )
               );
-            }
+            },
+            onDone: () => {}
           },
           ac.signal
         );
