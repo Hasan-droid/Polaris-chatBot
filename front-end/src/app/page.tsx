@@ -4,9 +4,9 @@ import { FilesPanel } from "@/components/files/FilesPanel";
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen polaris-grid">
+    <main className="h-screen polaris-grid">
       <HealthBanner />
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-10">
+      <div className="mx-auto flex h-full w-full max-w-6xl flex-col px-4 py-10">
         <header className="mb-6">
           <div className="inline-flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-polaris-500/20 ring-1 ring-polaris-500/30 shadow-glass flex items-center justify-center">
@@ -25,7 +25,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col gap-6 md:flex-row">
+        <div className="flex min-h-0 flex-1 flex-col gap-6 md:flex-row">
           <div className="md:w-1/4">
             <FilesPanel />
           </div>

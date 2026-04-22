@@ -15,7 +15,7 @@ export function ChatShell() {
   }, [messages.length, isStreaming]);
 
   return (
-    <section className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-glass backdrop-blur">
+    <section className="flex min-h-0 h-full flex-1 flex-col overflow rounded-2xl border border-white/10 bg-white/5 shadow-glass backdrop-blur">
       <div className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-polaris-500/20 ring-1 ring-polaris-500/30">
