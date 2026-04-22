@@ -28,7 +28,7 @@ curl http://localhost:8000/health
 
 ## 2. `GET /files`
 
-Returns all supported files inside the project directory.
+Returns all supported files inside `back-end/files/`.
 
 Supported file types:
 
@@ -36,6 +36,7 @@ Supported file types:
 - `.pdf`
 - `.txt`
 - `.md`
+- `.rtf`
 
 Input:
 
@@ -68,16 +69,13 @@ Content type:
 
 Inputs:
 
-- `question` (string, required): question to ask about the file contents
-- `model` (string, optional): OpenAI model name, default is `gpt-4o`
+- `question` (string, required): question to ask about the indexed file contents
 
 Example request:
 
 ```bash
 curl -N -X POST http://localhost:8000/chat/stream \
-  -F "file_path=sample.pdf" \
-  -F "question=What is this document about?" \
-  -F "model=gpt-4o"
+  -F "question=What is this document about?"
 ```
 
 Response type:
@@ -94,11 +92,12 @@ Example payload:
 
 ```json
 {
-  "file_name": "sample.pdf",
-  "file_path": "sample.pdf",
+  "files_dir": "files/",
   "chunk_count": 3,
   "question": "What is this document about?",
-  "model": "gpt-4o"
+  "model": "gpt-4o",
+  "embedding_model": "text-embedding-3-small",
+  "top_k": 6
 }
 ```
 
@@ -162,8 +161,7 @@ Sent when the request cannot continue.
 Possible causes:
 
 - `OPENAI_API_KEY` is missing
-- file parsing fails
-- file has no readable text
+- vector index is empty (run `POST /index/rebuild`)
 - OpenAI API returns an error
 - another runtime error happens during chunk processing
 
@@ -175,8 +173,35 @@ Example payload:
 }
 ```
 
-## Important note about current implementation
+## 4. `POST /index/rebuild`
 
-The endpoint definition accepts `file_path`, but the current code does not use the submitted `file_path` value when selecting the file to read.
+Builds (or rebuilds) the Chroma vector index from files located in `back-end/files/`.
 
-At the moment, the implementation resolves a path named `files` inside the project instead of using the posted `file_path` field. If that path does not exist as a supported file, the request will fail before streaming starts.
+Example:
+
+```bash
+curl -X POST http://localhost:8000/index/rebuild
+```
+
+Success response (example):
+
+```json
+{
+  "files_dir": "files/",
+  "files_indexed": ["Polaris Email Policy V1.0.rtf"],
+  "files_indexed_count": 1,
+  "chunks_indexed": 42,
+  "embedding_model": "text-embedding-3-small",
+  "indexed_at_unix": 1760000000
+}
+```
+
+## 5. `GET /index/status`
+
+Returns basic information about the current persisted Chroma index.
+
+Example:
+
+```bash
+curl http://localhost:8000/index/status
+```

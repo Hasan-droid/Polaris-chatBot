@@ -8,6 +8,13 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Secrets / local config
+.env
+.env.*
+
+# Vector DB persistence
+chroma_db/
 *.json
 *.pdf
 *.xlsx
